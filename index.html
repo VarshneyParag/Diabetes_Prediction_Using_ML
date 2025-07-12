@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Prediction</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://img.freepik.com/premium-photo/background-diabetic-disease-concept-with-copy-space-world-diabetes-day-banner_132254-880.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .info-text {
+            font-size: 0.875rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-6">Diabetes Prediction</h1>
+        <form method="post" class="space-y-4">
+            <div>
+                <label for="Pregnancies" class="block font-medium">Pregnancies:</label>
+                <input 
+                    type="number" 
+                    id="Pregnancies" 
+                    name="Pregnancies" 
+                    min="0" 
+                    max="20" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>20</b>. Normal value: <b>0-5</b>.</p>
+            </div>
+            <div>
+                <label for="Glucose" class="block font-medium">Glucose:</label>
+                <input 
+                    type="number" 
+                    id="Glucose" 
+                    name="Glucose" 
+                    min="0" 
+                    max="300" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>300</b>. Normal fasting glucose: <b>70-99 mg/dL</b>.</p>
+            </div>
+            <div>
+                <label for="BloodPressure" class="block font-medium">Blood Pressure:</label>
+                <input 
+                    type="number" 
+                    id="BloodPressure" 
+                    name="BloodPressure" 
+                    min="0" 
+                    max="200" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>200</b>. Normal range: <b>80-120 mmHg</b>.</p>
+            </div>
+            <div>
+                <label for="SkinThickness" class="block font-medium">Skin Thickness:</label>
+                <input 
+                    type="number" 
+                    id="SkinThickness" 
+                    name="SkinThickness" 
+                    min="0" 
+                    max="100" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>100</b>. Normal value: <b>10-50 mm</b>.</p>
+            </div>
+            <div>
+                <label for="Insulin" class="block font-medium">Insulin:</label>
+                <input 
+                    type="number" 
+                    id="Insulin" 
+                    name="Insulin" 
+                    min="0" 
+                    max="900" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>900</b>. Normal fasting value: <b>16-166 mU/L</b>.</p>
+            </div>
+            <div>
+                <label for="BMI" class="block font-medium">BMI:</label>
+                <input 
+                    type="number" 
+                    id="BMI" 
+                    name="BMI" 
+                    min="0" 
+                    max="70" 
+                    step="0.1" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>70</b>. Normal BMI: <b>18.5-24.9</b>.</p>
+            </div>
+            <div>
+                <label for="DiabetesPedigreeFunction" class="block font-medium">Diabetes Pedigree Function:</label>
+                <input 
+                    type="number" 
+                    id="DiabetesPedigreeFunction" 
+                    name="DiabetesPedigreeFunction" 
+                    min="0" 
+                    max="2.5" 
+                    step="0.01" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>2.5</b>. Normal range: <b>0.0-1.0</b>.</p>
+            </div>
+            <div>
+                <label for="Age" class="block font-medium">Age:</label>
+                <input 
+                    type="number" 
+                    id="Age" 
+                    name="Age" 
+                    min="0" 
+                    max="120" 
+                    required 
+                    class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:ring-blue-300">
+                <p class="info-text">Enter a value between <b>0</b> and <b>120</b>. Normal adult age: <b>18-60 years</b>.</p>
+            </div>
+            <button 
+                type="submit" 
+                class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition duration-200">
+                Predict
+            </button>
+        </form>
+
+        <script>
+            // Check if the result is available and display it in an alert
+            const result = "{{ result }}"; // Make sure to render this in your Flask template
+            if (result !== "None" && result) {
+                alert("Prediction Result: " + result);
+            }
+        </script>
+    </div>
+</body>
+</html>
