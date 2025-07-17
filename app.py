@@ -13,13 +13,12 @@ y = df['Outcome']
 # Train the model
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
-model = RandomForestClassifier(n_estimators=100, random_state=42)  # Using Random Forest instead of Logistic Regression
+model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_scaled, y)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # Get input data from form
         features = [
             float(request.form['Pregnancies']),
             float(request.form['Glucose']),
@@ -30,16 +29,12 @@ def index():
             float(request.form['DiabetesPedigreeFunction']),
             float(request.form['Age'])
         ]
-        
-        # Prepare data for prediction
         features_scaled = scaler.transform([features])
         prediction = model.predict(features_scaled)
-        
-        # Return prediction result
         result = 'Positive' if prediction[0] == 1 else 'Negative'
         return render_template('index.html', result=result, features=features)
-    
+
     return render_template('index.html', result=None)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080)
