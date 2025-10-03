@@ -3,80 +3,77 @@ import numpy as np
 from flask import Flask, request, render_template, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
+import cv2
+import random
 
 app = Flask(__name__)
-
-# Production configuration
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'prod-secret-key-123')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-# Import TensorFlow with error handling
-try:
-    from tensorflow.keras.models import load_model
-    TENSORFLOW_AVAILABLE = True
-    print("✅ TensorFlow loaded successfully")
-except ImportError as e:
-    print(f"❌ TensorFlow not available: {e}")
-    TENSORFLOW_AVAILABLE = False
+# Class names for demonstration
+class_names = [
+    "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", 
+    "Apple___healthy", "Blueberry___healthy", "Cherry___Powdery_mildew",
+    "Cherry___healthy", "Corn___Cercospora_leaf_spot", "Corn___Common_rust",
+    "Corn___Northern_Leaf_Blight", "Corn___healthy", "Grape___Black_rot",
+    "Grape___Esca", "Grape___Leaf_blight", "Grape___healthy",
+    "Orange___Haunglongbing", "Peach___Bacterial_spot", "Peach___healthy",
+    "Pepper_bell___Bacterial_spot", "Pepper_bell___healthy", "Potato___Early_blight",
+    "Potato___Late_blight", "Potato___healthy", "Raspberry___healthy",
+    "Soybean___healthy", "Squash___Powdery_mildew", "Strawberry___Leaf_scorch",
+    "Strawberry___healthy", "Tomato___Bacterial_spot", "Tomato___Early_blight",
+    "Tomato___Late_blight", "Tomato___Leaf_Mold", "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites", "Tomato___Target_Spot", 
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus", "Tomato___Tomato_mosaic_virus",
+    "Tomato___healthy"
+]
 
-# Load model
-model = None
-class_names = []
-
-if TENSORFLOW_AVAILABLE:
-    try:
-        # Try different possible model paths
-        possible_paths = [
-            'plant_leaf_disease_cnn_model.h5',
-            './plant_leaf_disease_cnn_model.h5'
-        ]
-        
-        for model_path in possible_paths:
-            if os.path.exists(model_path):
-                model = load_model(model_path)
-                print(f"✅ Model loaded from {model_path}")
-                break
-        else:
-            raise FileNotFoundError("Model file not found")
-            
-        # Load class names
-        class_paths = ['class_names.npy', './class_names.npy']
-        for class_path in class_paths:
-            if os.path.exists(class_path):
-                class_names = np.load(class_path, allow_pickle=True).tolist()
-                print(f"✅ Class names loaded from {class_path}")
-                break
-        else:
-            # Fallback class names
-            class_names = ["Healthy", "Diseased"]
-            
-    except Exception as e:
-        print(f"❌ Model loading failed: {e}")
-        TENSORFLOW_AVAILABLE = False
-
-# Mock model for fallback
-class MockModel:
-    def predict(self, x):
-        return np.random.rand(1, len(class_names))
-
-if not TENSORFLOW_AVAILABLE or model is None:
-    print("🔧 Using mock model")
-    model = MockModel()
-    class_names = class_names or ["Healthy", "Powdery Mildew", "Rust"]
+print("✅ Using lightweight version without TensorFlow")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def preprocess_image(img_path, target_size=(64, 64)):
-    img = Image.open(img_path).convert('RGB')
-    img = img.resize(target_size)
-    img_array = np.array(img)
-    img_array = img_array.astype('float32') / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+def analyze_leaf_health(img_path):
+    """Simple color-based analysis for demonstration"""
+    try:
+        img = cv2.imread(img_path)
+        if img is None:
+            return "Unknown", 50.0
+            
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+        
+        # Calculate green color percentage (healthy indicator)
+        green_lower = np.array([36, 25, 25])
+        green_upper = np.array([86, 255, 255])
+        green_mask = cv2.inRange(hsv, green_lower, green_upper)
+        green_percentage = np.sum(green_mask > 0) / (img.shape[0] * img.shape[1])
+        
+        # Calculate yellow/brown color percentage (disease indicator)
+        yellow_lower = np.array([20, 100, 100])
+        yellow_upper = np.array([30, 255, 255])
+        yellow_mask = cv2.inRange(hsv, yellow_lower, yellow_upper)
+        yellow_percentage = np.sum(yellow_mask > 0) / (img.shape[0] * img.shape[1])
+        
+        # Simple health assessment
+        if green_percentage > 0.6 and yellow_percentage < 0.1:
+            # Likely healthy
+            healthy_classes = [cls for cls in class_names if 'healthy' in cls.lower()]
+            main_class = random.choice(healthy_classes) if healthy_classes else class_names[3]  # Apple_healthy
+            confidence = min(95.0, 70.0 + (green_percentage * 25))
+        else:
+            # Likely diseased
+            disease_classes = [cls for cls in class_names if 'healthy' not in cls.lower()]
+            main_class = random.choice(disease_classes) if disease_classes else class_names[0]  # Apple_scab
+            confidence = min(90.0, 60.0 + (yellow_percentage * 30))
+            
+        return main_class, confidence
+        
+    except Exception as e:
+        print(f"Analysis error: {e}")
+        return "Unknown", 50.0
 
 @app.route('/')
 def home():
@@ -102,47 +99,53 @@ def predict():
         file.save(filepath)
 
         try:
-            img_array = preprocess_image(filepath)
-            predictions = model.predict(img_array)
-            predicted_class_idx = np.argmax(predictions[0])
+            # Use simple color analysis
+            predicted_class, confidence = analyze_leaf_health(filepath)
             
-            predicted_class = class_names[predicted_class_idx] if predicted_class_idx < len(class_names) else "Unknown"
-            confidence = float(np.max(predictions[0]))
-
-            top3_indices = np.argsort(predictions[0])[-3:][::-1]
+            # Generate top 3 predictions
             top3_predictions = []
+            top3_predictions.append({
+                "class": predicted_class, 
+                "confidence": round(confidence, 2)
+            })
             
-            for i in top3_indices:
-                class_name = class_names[i] if i < len(class_names) else f"Class_{i}"
-                top3_predictions.append({
-                    "class": class_name, 
-                    "confidence": round(float(predictions[0][i]) * 100, 2)
-                })
+            # Add 2 more random predictions
+            other_classes = [cls for cls in class_names if cls != predicted_class]
+            for _ in range(2):
+                if other_classes:
+                    cls = random.choice(other_classes)
+                    other_classes.remove(cls)
+                    top3_predictions.append({
+                        "class": cls, 
+                        "confidence": round(random.uniform(10, confidence - 5), 2)
+                    })
 
-            return jsonify({
+            result = {
                 "status": "success",
                 "predicted_class": predicted_class,
-                "confidence": round(confidence * 100, 2),
+                "confidence": round(confidence, 2),
                 "top3": top3_predictions,
                 "image_url": f"/uploads/{filename}",
-                "model_loaded": TENSORFLOW_AVAILABLE
-            })
+                "demo_mode": True,
+                "message": "Using color-based analysis (Demo Mode)"
+            }
+            
+            return jsonify(result)
             
         except Exception as e:
             return jsonify({"error": f"Error processing image: {str(e)}"})
-    
-    return jsonify({"error": "Invalid file type"})
+    else:
+        return jsonify({"error": "Invalid file type. Please upload PNG, JPG, or JPEG."})
 
 @app.route('/health')
 def health_check():
     return jsonify({
-        "status": "healthy",
-        "tensorflow_available": TENSORFLOW_AVAILABLE,
-        "model_loaded": model is not None,
+        "status": "healthy", 
+        "mode": "lightweight",
         "num_classes": len(class_names)
     })
 
-# Ensure uploads directory exists
+# Create uploads directory
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
